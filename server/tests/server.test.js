@@ -178,7 +178,6 @@ describe('PATCH /todos/:id', () => {
                 expect(res.body.todo.text).toBe(newBody.text);
                 expect(res.body.todo.completed).toBe(newBody.completed);
                 expect(res.body.todo.completedAt).toBeA('number');
-                done();
             })
             .end(done);
     });
@@ -187,7 +186,7 @@ describe('PATCH /todos/:id', () => {
         var newBody = {
             text: "Updated test text",
             completed: false
-        }
+        };
 
         request(app)
             .patch(`/todos/${hexId}`)
@@ -197,7 +196,6 @@ describe('PATCH /todos/:id', () => {
                 expect(res.body.todo.text).toBe(newBody.text);
                 expect(res.body.todo.completed).toBe(newBody.completed);
                 expect(res.body.todo.completedAt).toNotExist();
-                done();
             })
             .end(done);
     });
