@@ -89,7 +89,6 @@ describe('Todos endpoints', () => {
                 });
         })
     });
-
     describe('GET /todos', () => {
         it('Should get all todos', (done) => {
             request(app)
@@ -101,7 +100,6 @@ describe('Todos endpoints', () => {
                 .end(done);
         });
     });
-
     describe('GET /todos/:id', () => {
         it('Should return todo doc', (done) => {
             var id = todos[0]._id.toHexString()
@@ -130,8 +128,6 @@ describe('Todos endpoints', () => {
                 .end(done);
         });
     });
-
-
     describe('DELETE /todos/:id', () => {
         it('Should remove a todo', (done) => {
             var hexId = todos[1]._id.toHexString();
@@ -171,7 +167,6 @@ describe('Todos endpoints', () => {
                 .end(done)
         });
     });
-
     describe('PATCH /todos/:id', () => {
         it('Should update the todo', (done) => {
             var hexId = todos[0]._id.toHexString();
@@ -234,7 +229,7 @@ describe('Users endpoint', () => {
                 .expect(201)
                 .expect((res) => {
                     expect(res.body.email).toBe(user.email);
-                    expect(res.body.password).toBe(user.password);
+                    // expect(res.body.password).toBe(user.password);
                 })
                 .end((err, res) => {
                     if (err) {
@@ -358,6 +353,37 @@ describe('Users endpoint', () => {
                     // console.log(JSON.stringify(res.body, undefined, 2));
                     expect(res.body.errors.password.message).toBe('Path `password` is required.');
                     expect(res.body.errors.password.properties.type).toBe('required');
+                })
+                .end(done);
+        });
+        it('Should return only email and id attributes in the response', (done) => {
+            var user = {
+                email: "attributes@example.com",
+                password: '1234567890'
+            };
+
+            request(app)
+                .post('/users')
+                .send(user)
+                .expect(201)
+                .expect((res) => {
+                    expect(res.body).toIncludeKeys(['_id', 'email']);
+                })
+                .end(done);
+        });
+        it('Should contain x-auth attribute in the header of the response', (done) => {
+            var user = {
+                email: "attributes@example.com",
+                password: '1234567890'
+            };
+
+            request(app)
+                .post('/users')
+                .send(user)
+                .expect(201)
+                .expect((res) => {
+                    expect(res.header).toIncludeKeys(['x-auth']);
+                    expect(res.header['x-auth']).toNotEqual('undefined');
                 })
                 .end(done);
         });
