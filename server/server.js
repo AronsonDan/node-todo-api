@@ -134,10 +134,10 @@ app.patch('/todos/:id', (req, res) => {
 
 });
 
-app.post('/user', (req, res) => {
-    var user = new User({
-        email: req.body.email
-    });
+app.post('/users', (req, res) => {
+    var user = new User(
+        _.pick(req.body, ['email', 'password'])
+    );
 
     user
         .save()
