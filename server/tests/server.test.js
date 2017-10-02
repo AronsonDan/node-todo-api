@@ -3,43 +3,15 @@ const request = require('supertest');
 
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
+const {todos, populateTodos, users, populateUsers} = require('./seed/seed');
 const {User} = require('./../models/user');
 const {ObjectID} = require('mongodb');
 
-const todos = [
-    {
-        _id: new ObjectID(),
-        text: 'first test todo'
-    },
-    {
-        _id: new ObjectID(),
-        text: 'second test todo',
-        completed: true,
-        completedAt: 10987
-    }
-];
-
-const users = [
-    {
-        email: "dan.a@example.com",
-        password: "123456789"
-    },
-    {
-        email: "idan.k@example.com",
-        password: "123456789"
-    }
-];
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('Todos endpoints', () => {
 
-    beforeEach((done) => {
-        Todo
-            .remove({})
-            .then(() => {
-                return Todo.insertMany(todos);
-            })
-            .then(() => done());
-    });
 
     describe('POST /todos', () => {
         it('should create a new todo', (done) => {
@@ -208,14 +180,6 @@ describe('Todos endpoints', () => {
 });
 
 describe('Users endpoint', () => {
-    beforeEach((done) => {
-        User
-            .remove({})
-            .then(() => {
-                return User.insertMany(users);
-            })
-            .then(() => done());
-    });
 
     describe('POST /users', () => {
         it('should create a new user', (done) => {
@@ -228,19 +192,21 @@ describe('Users endpoint', () => {
                 .send(user)
                 .expect(201)
                 .expect((res) => {
+                    expect(res.header).toIncludeKeys(['x-auth']);
+                    expect(res.header['x-auth']).toNotEqual('undefined');
                     expect(res.body.email).toBe(user.email);
-                    // expect(res.body.password).toBe(user.password);
+                    expect(res.body._id).toExist();
+
                 })
-                .end((err, res) => {
+                .end((err) => {
                     if (err) {
                         return done(err);
                     }
                     User
-                        .find()
-                        .then((users) => {
-                            expect(users.length).toBe(3);
-                            expect(users[2].email).toBe(user.email);
-                            expect(users[2].password).toBe(user.password);
+                        .findOne({email: user.email})
+                        .then((userFromDB) => {
+                            expect(userFromDB.email).toBe(user.email);
+                            expect(userFromDB.password).toNotBe(user.password);
                             done();
                         })
                         .catch((err) => done(err));
@@ -315,7 +281,6 @@ describe('Users endpoint', () => {
                 .send(user)
                 .expect(400)
                 .expect((res) => {
-                    // console.log(JSON.stringify(res.body, undefined, 2));
                     expect(res.body.code).toBe(11000);
                     var isErrMessageCorrect = res.body.errmsg.startsWith('E11000 duplicate key error collection');
                     expect(isErrMessageCorrect).toExist();
@@ -371,19 +336,26 @@ describe('Users endpoint', () => {
                 })
                 .end(done);
         });
-        it('Should contain x-auth attribute in the header of the response', (done) => {
-            var user = {
-                email: "attributes@example.com",
-                password: '1234567890'
-            };
+    });
 
+    describe('GET /users/me', () => {
+        it('Should return a user if authenticated', (done) => {
             request(app)
-                .post('/users')
-                .send(user)
-                .expect(201)
+                .get('/users/me')
+                .set('x-auth', users[0].tokens[0].token)
+                .expect(200)
                 .expect((res) => {
-                    expect(res.header).toIncludeKeys(['x-auth']);
-                    expect(res.header['x-auth']).toNotEqual('undefined');
+                    expect(res.body._id).toBe(users[0]._id.toHexString());
+                    expect(res.body.email).toBe(users[0].email);
+                })
+                .end(done);
+        });
+        it('Should return a 401 if not authenticated', (done) => {
+            request(app)
+                .get('/users/me')
+                .expect(401)
+                .expect((res) => {
+                    expect(res.body).toEqual({});
                 })
                 .end(done);
         });
