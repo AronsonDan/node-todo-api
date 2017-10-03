@@ -14,7 +14,7 @@ var app = express();
 var port = process.env.PORT;
 
 app.use(bodyParser.json());
-
+// POST /todos
 app.post('/todos', (req, res) => {
     var todo = new Todo({
         text: req.body.text
@@ -31,7 +31,7 @@ app.post('/todos', (req, res) => {
                 .send(err);
         });
 });
-
+// GET /todos
 app.get('/todos', (req, res) => {
     Todo
         .find()
@@ -45,7 +45,7 @@ app.get('/todos', (req, res) => {
                 .send(err);
         })
 });
-
+// GET /todos/:id
 app.get('/todos/:id', (req, res) => {
     var id = req.params.id;
     if (!ObjectID.isValid(id)) {
@@ -68,7 +68,7 @@ app.get('/todos/:id', (req, res) => {
             res.status(400).send();
         })
 });
-
+// DELETE /todos/:id
 app.delete('/todos/:id', (req, res) => {
     var id = req.params.id;
     if (!ObjectID.isValid(id)) {
@@ -93,7 +93,7 @@ app.delete('/todos/:id', (req, res) => {
                 .send();
         });
 });
-
+// PATCH /todos/:id
 app.patch('/todos/:id', (req, res) => {
     var id = req.params.id;
     var body = _.pick(req.body, ['text', 'completed']);
@@ -134,7 +134,7 @@ app.patch('/todos/:id', (req, res) => {
 
 
 });
-
+// POST /users
 app.post('/users', (req, res) => {
     var body = _.pick(req.body, ['email', 'password']);
     var user = new User(body);
@@ -156,10 +156,28 @@ app.post('/users', (req, res) => {
                 .send(err);
         });
 });
-
-
+// GET /users/me
 app.get('/users/me', authenticate, (req, res) => {
     res.send(req.user);
+});
+// POST /users/login (email, password)
+app.post('/users/login', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password']);
+    User
+        .findByCredentials(body.email, body.password)
+        .then((user) => {
+            return user.generateAuthToken()
+                .then((token) => {
+                    res
+                        .header('x-auth', token)
+                        .status(200)
+                        .send(user);
+                });
+        })
+        .catch((error) => {
+            res.status(400).send();
+        });
+
 });
 
 app.listen(port, () => {
