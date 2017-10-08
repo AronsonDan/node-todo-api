@@ -15,9 +15,10 @@ var port = process.env.PORT;
 
 app.use(bodyParser.json());
 // POST /todos
-app.post('/todos', (req, res) => {
+app.post('/todos', authenticate, (req, res) => {
     var todo = new Todo({
-        text: req.body.text
+        text: req.body.text,
+        _creator: req.user._id
     });
     todo
         .save()
@@ -32,9 +33,11 @@ app.post('/todos', (req, res) => {
         });
 });
 // GET /todos
-app.get('/todos', (req, res) => {
+app.get('/todos', authenticate, (req, res) => {
     Todo
-        .find()
+        .find({
+            _creator: req.user._id
+        })
         .then((todos) => {
             res.send({
                 todos
@@ -181,7 +184,6 @@ app.post('/users/login', (req, res) => {
 });
 // DELETE /users/me/token
 app.delete('/users/me/token', authenticate, (req, res) => {
-    console.log(req);
     req
         .user
         .removeToken(req.token)

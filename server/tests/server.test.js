@@ -17,6 +17,7 @@ describe('Todos endpoints', () => {
 
             request(app)
                 .post('/todos')
+                .set('x-auth', users[0].tokens[0].token)
                 .send({
                     text
                 })
@@ -42,6 +43,7 @@ describe('Todos endpoints', () => {
 
             request(app)
                 .post('/todos')
+                .set('x-auth', users[0].tokens[0].token)
                 .send({})
                 .expect(400)
                 .end((err, res) => {
@@ -64,9 +66,10 @@ describe('Todos endpoints', () => {
         it('Should get all todos', (done) => {
             request(app)
                 .get('/todos')
+                .set('x-auth', users[0].tokens[0].token)
                 .expect(200)
                 .expect((res) => {
-                    expect(res.body.todos.length).toBe(2);
+                    expect(res.body.todos.length).toBe(1);
                 })
                 .end(done);
         });
@@ -422,7 +425,7 @@ describe('Users endpoint', () => {
     describe('delete /users/me/token', () => {
         it('Should remove auth token on logout', (done) => {
             request(app)
-                .delete('users/me/token')
+                .delete('/users/me/token')
                 .set('x-auth', users[0].tokens[0].token)
                 .expect(200)
                 .end((err, res) => {
