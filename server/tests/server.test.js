@@ -135,7 +135,7 @@ describe('Todos endpoints', () => {
                     Todo
                         .findById(hexId)
                         .then((todo) => {
-                            expect(todo).toNotExist();
+                            expect(todo).toBeFalsy();
                             done();
                         })
                         .catch((err) => done(err));
@@ -156,7 +156,7 @@ describe('Todos endpoints', () => {
                     Todo
                         .findById(hexId)
                         .then((todo) => {
-                            expect(todo).toExist();
+                            expect(todo).toBeTruthy();
                             done();
                         })
                         .catch((err) => done(err));
@@ -196,8 +196,9 @@ describe('Todos endpoints', () => {
                 .expect((res) => {
                     expect(res.body.todo.text).toBe(newBody.text);
                     expect(res.body.todo.completed).toBe(newBody.completed);
-                    expect(res.body.todo.completedAt).toBeA('number');
+                    expect(typeof res.body.todo.completedAt).toBe('number');
                 })
+
                 .end(done);
         });
         it('Should not update the todo due to a wrong user', (done) => {
@@ -229,7 +230,7 @@ describe('Todos endpoints', () => {
                 .expect((res) => {
                     expect(res.body.todo.text).toBe(newBody.text);
                     expect(res.body.todo.completed).toBe(newBody.completed);
-                    expect(res.body.todo.completedAt).toNotExist();
+                    expect(res.body.todo.completedAt).toBeFalsy();
                 })
                 .end(done);
         });
@@ -249,10 +250,10 @@ describe('Users endpoint', () => {
                 .send(user)
                 .expect(201)
                 .expect((res) => {
-                    expect(res.header).toIncludeKeys(['x-auth']);
-                    expect(res.header['x-auth']).toNotEqual('undefined');
+                    expect(res.header).toHaveProperty('x-auth');
+                    expect(res.header['x-auth']).toBeDefined();
                     expect(res.body.email).toBe(user.email);
-                    expect(res.body._id).toExist();
+                    expect(res.body._id).toBeTruthy();
 
                 })
                 .end((err) => {
@@ -263,7 +264,7 @@ describe('Users endpoint', () => {
                         .findOne({email: user.email})
                         .then((userFromDB) => {
                             expect(userFromDB.email).toBe(user.email);
-                            expect(userFromDB.password).toNotBe(user.password);
+                            expect(userFromDB.password).not.toBe(user.password);
                             done();
                         })
                         .catch((err) => done(err));
@@ -340,7 +341,7 @@ describe('Users endpoint', () => {
                 .expect((res) => {
                     expect(res.body.code).toBe(11000);
                     var isErrMessageCorrect = res.body.errmsg.startsWith('E11000 duplicate key error collection');
-                    expect(isErrMessageCorrect).toExist();
+                    expect(isErrMessageCorrect).toBeTruthy();
 
                 })
                 .end(done);
@@ -389,7 +390,8 @@ describe('Users endpoint', () => {
                 .send(user)
                 .expect(201)
                 .expect((res) => {
-                    expect(res.body).toIncludeKeys(['_id', 'email']);
+                    expect(res.body).toHaveProperty('_id');
+                    expect(res.body).toHaveProperty('email');
                 })
                 .end(done);
         });
@@ -428,7 +430,7 @@ describe('Users endpoint', () => {
                 })
                 .expect(200)
                 .expect((res) => {
-                    expect(res.headers['x-auth']).toExist();
+                    expect(res.headers['x-auth']).toBeTruthy();
                 })
                 .end((err, res) => {
                     if (err) {
@@ -437,9 +439,9 @@ describe('Users endpoint', () => {
                     User
                         .findById(users[1]._id)
                         .then((user) => {
-                            expect(user.tokens[1]).toInclude({
-                                access: 'auth',
-                                token: res.headers['x-auth']
+                            expect(user.toObject().tokens[1]).toMatchObject({
+                                'access': 'auth',
+                                'token': res.headers['x-auth']
                             });
                             done();
                         })
